@@ -1,0 +1,32 @@
+apiVersion: kubescheduler.config.k8s.io/v1beta1
+kind: KubeSchedulerConfiguration
+clientConnection:
+  kubeconfig: ./deploy/kube-config.yml
+leaderElection:
+  leaderElect: true
+  resourceName: qinchy-scheduler
+  resourceNamespace: kube-system
+  leaseDuration: 10s
+  leaseDeadline: 5s
+  renewDeadline: 3s
+profiles:
+  - schedulerName: "qinchy-scheduler"
+    plugins:
+      prefilter:
+        enabled:
+          - name: "Qinchy-Plugin"
+      filter:
+        enabled:
+          - name: "Qinchy-Plugin"
+      score:
+        enabled:
+          - name: "Qinchy-Plugin"
+      preBind:
+        enabled:
+          - name: "Qinchy-Plugin"
+    pluginConfig:
+      - name: "Qinchy-Plugin"
+        args:
+          favorite_color: "#326CE5"
+          favorite_number: 7
+          thanks_to: "thockin"
