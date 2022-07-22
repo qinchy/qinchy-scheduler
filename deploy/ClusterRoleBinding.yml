@@ -9,5 +9,5 @@ roleRef:
   name: qinchy-scheduler-clusterrole
 subjects:
   - kind: ServiceAccount
-    name: qinchy-scheduler-sa
+    name: qinchy-scheduler-serviceaccount
     namespace: kube-system
