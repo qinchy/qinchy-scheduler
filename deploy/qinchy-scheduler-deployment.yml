@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qinchy-scheduler
+  namespace: kube-system
+  labels:
+    component: qinchy-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: qinchy-scheduler
+  template:
+    metadata:
+      labels:
+        component: qinchy-scheduler
+    spec:
+      serviceAccount: qinchy-scheduler-serviceaccount
+      priorityClassName: system-cluster-critical
+      volumes:
+        - name: qinchy-scheduler-configmap
+          configMap:
+            name: qinchy-scheduler-configmap
+      containers:
+        - name: qinchy-scheduler
+          image: registry-vpc.cn-hangzhou.aliyuncs.com/node-allocation-exporter/qinchy-scheduler:0.0.4
+          imagePullPolicy: IfNotPresent
+          args:
+            - qinchy-scheduler
+            - --config=/etc/kubernetes/qinchy-scheduler-configuration.yml
+            - --v=4
+          resources:
+            requests:
+              cpu: "50m"
+          volumeMounts:
+            - name: qinchy-scheduler-configmap
+              mountPath: /etc/kubernetes
