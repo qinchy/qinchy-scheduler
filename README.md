@@ -6,9 +6,10 @@
 * 执行go mod vendor，将依赖拷贝到vendor目录
 * 执行go build -o qinchy-scheduler，编译得到目标可执行文件。
 * 执行docker build -t ${TAG} .，构建镜像，并推送到镜像仓库。
-* 在k8s集群中使用`ClusterRole.yml`创建`ClusterRole`,
-  使用`ClusterRoleBinding.yml`创建`ClusterRoleBinding`,
-  使用`scheduler-config.yaml`文件创建`configmap`,
-  使用`ServiceAccount.yml`创建`ServiceAccount`,
+* 在k8s集群中使用`qinchy-scheduler-clusterrole.yml`创建`ClusterRole`,
+  使用`qinchy-scheduler-clusterrolebinding.yml`创建`ClusterRoleBinding`,
+  使用`qinchy-scheduler-scheduler-config.yaml`文件创建`configmap`,
+  使用`qinchy-scheduler-serviceaccount.yml`创建`ServiceAccount`,
+* 使用`qinchy-scheduler-deployment.yml`创建调度器的Deployment
 
   
