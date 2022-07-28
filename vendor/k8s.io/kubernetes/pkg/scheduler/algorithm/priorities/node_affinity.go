@@ -19,10 +19,10 @@ package priorities
 import (
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
-	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
+	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
 	schedulernodeinfo "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 )
 
@@ -31,10 +31,10 @@ import (
 // it will get an add of preferredSchedulingTerm.Weight. Thus, the more preferredSchedulingTerms
 // the node satisfies and the more the preferredSchedulingTerm that is satisfied weights, the higher
 // score the node gets.
-func CalculateNodeAffinityPriorityMap(pod *v1.Pod, meta interface{}, nodeInfo *schedulernodeinfo.NodeInfo) (framework.NodeScore, error) {
+func CalculateNodeAffinityPriorityMap(pod *v1.Pod, meta interface{}, nodeInfo *schedulernodeinfo.NodeInfo) (schedulerapi.HostPriority, error) {
 	node := nodeInfo.Node()
 	if node == nil {
-		return framework.NodeScore{}, fmt.Errorf("node not found")
+		return schedulerapi.HostPriority{}, fmt.Errorf("node not found")
 	}
 
 	// default is the podspec.
@@ -59,7 +59,7 @@ func CalculateNodeAffinityPriorityMap(pod *v1.Pod, meta interface{}, nodeInfo *s
 			// TODO: Avoid computing it for all nodes if this becomes a performance problem.
 			nodeSelector, err := v1helper.NodeSelectorRequirementsAsSelector(preferredSchedulingTerm.Preference.MatchExpressions)
 			if err != nil {
-				return framework.NodeScore{}, err
+				return schedulerapi.HostPriority{}, err
 			}
 			if nodeSelector.Matches(labels.Set(node.Labels)) {
 				count += preferredSchedulingTerm.Weight
@@ -67,11 +67,11 @@ func CalculateNodeAffinityPriorityMap(pod *v1.Pod, meta interface{}, nodeInfo *s
 		}
 	}
 
-	return framework.NodeScore{
-		Name:  node.Name,
-		Score: int64(count),
+	return schedulerapi.HostPriority{
+		Host:  node.Name,
+		Score: int(count),
 	}, nil
 }
 
 // CalculateNodeAffinityPriorityReduce is a reduce function for node affinity priority calculation.
-var CalculateNodeAffinityPriorityReduce = NormalizeReduce(framework.MaxNodeScore, false)
+var CalculateNodeAffinityPriorityReduce = NormalizeReduce(schedulerapi.MaxPriority, false)

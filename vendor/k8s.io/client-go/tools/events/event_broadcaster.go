@@ -53,6 +53,7 @@ type eventKey struct {
 	action              string
 	reason              string
 	reportingController string
+	reportingInstance   string
 	regarding           corev1.ObjectReference
 	related             corev1.ObjectReference
 }
@@ -100,10 +101,6 @@ func newBroadcaster(sink EventSink, sleepDuration time.Duration, eventCache map[
 		sleepDuration: sleepDuration,
 		sink:          sink,
 	}
-}
-
-func (e *eventBroadcasterImpl) Shutdown() {
-	e.Broadcaster.Shutdown()
 }
 
 // refreshExistingEventSeries refresh events TTL
@@ -267,6 +264,7 @@ func getKey(event *v1beta1.Event) eventKey {
 		action:              event.Action,
 		reason:              event.Reason,
 		reportingController: event.ReportingController,
+		reportingInstance:   event.ReportingInstance,
 		regarding:           event.Regarding,
 	}
 	if event.Related != nil {

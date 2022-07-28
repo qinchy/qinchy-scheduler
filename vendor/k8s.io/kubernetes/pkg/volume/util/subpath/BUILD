@@ -12,54 +12,49 @@ go_library(
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:android": [
-            "//vendor/golang.org/x/sys/unix:go_default_library",
-            "//vendor/k8s.io/klog:go_default_library",
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
+            "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:darwin": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:dragonfly": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:freebsd": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
-            "//vendor/k8s.io/utils/nsenter:go_default_library",
-        ],
-        "@io_bazel_rules_go//go/platform:ios": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "//pkg/util/mount:go_default_library",
             "//vendor/golang.org/x/sys/unix:go_default_library",
             "//vendor/k8s.io/klog:go_default_library",
-            "//vendor/k8s.io/utils/mount:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:nacl": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:netbsd": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:openbsd": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:plan9": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:solaris": [
-            "//vendor/k8s.io/utils/mount:go_default_library",
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/klog:go_default_library",
-            "//vendor/k8s.io/utils/mount:go_default_library",
             "//vendor/k8s.io/utils/nsenter:go_default_library",
         ],
         "//conditions:default": [],
@@ -74,13 +69,9 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:android": [
-            "//vendor/k8s.io/klog:go_default_library",
-            "//vendor/k8s.io/utils/mount:go_default_library",
-        ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "//pkg/util/mount:go_default_library",
             "//vendor/k8s.io/klog:go_default_library",
-            "//vendor/k8s.io/utils/mount:go_default_library",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
             "//vendor/github.com/stretchr/testify/assert:go_default_library",

@@ -29,7 +29,6 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = ["config_test.go"],
-    data = glob(["testdata/**"]),
     embed = [":go_default_library"],
     deps = [
         "//staging/src/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",

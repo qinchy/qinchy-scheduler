@@ -25,7 +25,7 @@ import (
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/kubernetes/pkg/features"
 	priorityutil "k8s.io/kubernetes/pkg/scheduler/algorithm/priorities/util"
-	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
+	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
 	schedulernodeinfo "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 )
 
@@ -50,13 +50,13 @@ var DefaultRequestedRatioResources = ResourceToWeightMap{v1.ResourceMemory: 1, v
 func (r *ResourceAllocationPriority) PriorityMap(
 	pod *v1.Pod,
 	meta interface{},
-	nodeInfo *schedulernodeinfo.NodeInfo) (framework.NodeScore, error) {
+	nodeInfo *schedulernodeinfo.NodeInfo) (schedulerapi.HostPriority, error) {
 	node := nodeInfo.Node()
 	if node == nil {
-		return framework.NodeScore{}, fmt.Errorf("node not found")
+		return schedulerapi.HostPriority{}, fmt.Errorf("node not found")
 	}
 	if r.resourceToWeightMap == nil {
-		return framework.NodeScore{}, fmt.Errorf("resources not found")
+		return schedulerapi.HostPriority{}, fmt.Errorf("resources not found")
 	}
 	requested := make(ResourceToValueMap, len(r.resourceToWeightMap))
 	allocatable := make(ResourceToValueMap, len(r.resourceToWeightMap))
@@ -90,9 +90,9 @@ func (r *ResourceAllocationPriority) PriorityMap(
 		}
 	}
 
-	return framework.NodeScore{
-		Name:  node.Name,
-		Score: score,
+	return schedulerapi.HostPriority{
+		Host:  node.Name,
+		Score: int(score),
 	}, nil
 }
 
@@ -124,7 +124,6 @@ func calculateResourceAllocatableRequest(nodeInfo *schedulernodeinfo.NodeInfo, p
 
 // calculatePodResourceRequest returns the total non-zero requests. If Overhead is defined for the pod and the
 // PodOverhead feature is enabled, the Overhead is added to the result.
-// podResourceRequest = max(sum(podSpec.Containers), podSpec.InitContainers) + overHead
 func calculatePodResourceRequest(pod *v1.Pod, resource v1.ResourceName) int64 {
 	var podRequest int64
 	for i := range pod.Spec.Containers {
@@ -133,20 +132,11 @@ func calculatePodResourceRequest(pod *v1.Pod, resource v1.ResourceName) int64 {
 		podRequest += value
 	}
 
-	for i := range pod.Spec.InitContainers {
-		initContainer := &pod.Spec.InitContainers[i]
-		value := priorityutil.GetNonzeroRequestForResource(resource, &initContainer.Resources.Requests)
-		if podRequest < value {
-			podRequest = value
-		}
-	}
-
 	// If Overhead is being utilized, add to the total requests for the pod
 	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(features.PodOverhead) {
 		if quantity, found := pod.Spec.Overhead[resource]; found {
 			podRequest += quantity.Value()
 		}
 	}
-
 	return podRequest
 }

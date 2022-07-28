@@ -8,7 +8,6 @@ load(
 go_library(
     name = "go_default_library",
     srcs = [
-        "csinode.go",
         "expansion_generated.go",
         "storageclass.go",
         "volumeattachment.go",

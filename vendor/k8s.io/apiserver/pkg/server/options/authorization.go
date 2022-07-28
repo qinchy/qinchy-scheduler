@@ -59,10 +59,6 @@ type DelegatingAuthorizationOptions struct {
 
 	// AlwaysAllowGroups are groups which are allowed to take any actions.  In kube, this is system:masters.
 	AlwaysAllowGroups []string
-
-	// ClientTimeout specifies a time limit for requests made by SubjectAccessReviews client.
-	// The default value is set to 10 seconds.
-	ClientTimeout time.Duration
 }
 
 func NewDelegatingAuthorizationOptions() *DelegatingAuthorizationOptions {
@@ -70,7 +66,6 @@ func NewDelegatingAuthorizationOptions() *DelegatingAuthorizationOptions {
 		// very low for responsiveness, but high enough to handle storms
 		AllowCacheTTL: 10 * time.Second,
 		DenyCacheTTL:  10 * time.Second,
-		ClientTimeout: 10 * time.Second,
 	}
 }
 
@@ -84,11 +79,6 @@ func (s *DelegatingAuthorizationOptions) WithAlwaysAllowGroups(groups ...string)
 func (s *DelegatingAuthorizationOptions) WithAlwaysAllowPaths(paths ...string) *DelegatingAuthorizationOptions {
 	s.AlwaysAllowPaths = append(s.AlwaysAllowPaths, paths...)
 	return s
-}
-
-// WithClientTimeout sets the given timeout for SAR client used by this authorizer
-func (s *DelegatingAuthorizationOptions) WithClientTimeout(timeout time.Duration) {
-	s.ClientTimeout = timeout
 }
 
 func (s *DelegatingAuthorizationOptions) Validate() []error {
@@ -156,7 +146,7 @@ func (s *DelegatingAuthorizationOptions) toAuthorizer(client kubernetes.Interfac
 		klog.Warningf("No authorization-kubeconfig provided, so SubjectAccessReview of authorization tokens won't work.")
 	} else {
 		cfg := authorizerfactory.DelegatingAuthorizerConfig{
-			SubjectAccessReviewClient: client.AuthorizationV1().SubjectAccessReviews(),
+			SubjectAccessReviewClient: client.AuthorizationV1beta1().SubjectAccessReviews(),
 			AllowCacheTTL:             s.AllowCacheTTL,
 			DenyCacheTTL:              s.DenyCacheTTL,
 		}
@@ -196,7 +186,6 @@ func (s *DelegatingAuthorizationOptions) getClient() (kubernetes.Interface, erro
 	// set high qps/burst limits since this will effectively limit API server responsiveness
 	clientConfig.QPS = 200
 	clientConfig.Burst = 400
-	clientConfig.Timeout = s.ClientTimeout
 
 	return kubernetes.NewForConfig(clientConfig)
 }

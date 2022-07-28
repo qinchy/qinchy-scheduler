@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	"k8s.io/csi-translation-lib/plugins"
 )
@@ -35,20 +35,9 @@ var (
 	}
 )
 
-// CSITranslator translates in-tree storage API objects to their equivalent CSI
-// API objects. It also provides many helper functions to determine whether
-// translation logic exists and the mappings between "in-tree plugin <-> csi driver"
-type CSITranslator struct{}
-
-// New creates a new CSITranslator which does real translation
-// for "in-tree plugins <-> csi drivers"
-func New() CSITranslator {
-	return CSITranslator{}
-}
-
 // TranslateInTreeStorageClassToCSI takes in-tree Storage Class
 // and translates it to a set of parameters consumable by CSI plugin
-func (CSITranslator) TranslateInTreeStorageClassToCSI(inTreePluginName string, sc *storage.StorageClass) (*storage.StorageClass, error) {
+func TranslateInTreeStorageClassToCSI(inTreePluginName string, sc *storage.StorageClass) (*storage.StorageClass, error) {
 	newSC := sc.DeepCopy()
 	for _, curPlugin := range inTreePlugins {
 		if inTreePluginName == curPlugin.GetInTreePluginName() {
@@ -61,26 +50,13 @@ func (CSITranslator) TranslateInTreeStorageClassToCSI(inTreePluginName string, s
 // TranslateInTreeInlineVolumeToCSI takes a inline volume and will translate
 // the in-tree volume source to a CSIPersistentVolumeSource (wrapped in a PV)
 // if the translation logic has been implemented.
-func (CSITranslator) TranslateInTreeInlineVolumeToCSI(volume *v1.Volume) (*v1.PersistentVolume, error) {
+func TranslateInTreeInlineVolumeToCSI(volume *v1.Volume) (*v1.PersistentVolume, error) {
 	if volume == nil {
 		return nil, fmt.Errorf("persistent volume was nil")
 	}
 	for _, curPlugin := range inTreePlugins {
 		if curPlugin.CanSupportInline(volume) {
-			pv, err := curPlugin.TranslateInTreeInlineVolumeToCSI(volume)
-			if err != nil {
-				return nil, err
-			}
-			// Inline volumes only support PersistentVolumeFilesystem (and not block).
-			// If VolumeMode has not been set explicitly by plugin-specific
-			// translator, set it to Filesystem here.
-			// This is only necessary for inline volumes as the default PV
-			// initialization that populates VolumeMode does not apply to inline volumes.
-			if pv.Spec.VolumeMode == nil {
-				volumeMode := v1.PersistentVolumeFilesystem
-				pv.Spec.VolumeMode = &volumeMode
-			}
-			return pv, nil
+			return curPlugin.TranslateInTreeInlineVolumeToCSI(volume)
 		}
 	}
 	return nil, fmt.Errorf("could not find in-tree plugin translation logic for %#v", volume.Name)
@@ -90,7 +66,7 @@ func (CSITranslator) TranslateInTreeInlineVolumeToCSI(volume *v1.Volume) (*v1.Pe
 // the in-tree source to a CSI Source if the translation logic
 // has been implemented. The input persistent volume will not
 // be modified
-func (CSITranslator) TranslateInTreePVToCSI(pv *v1.PersistentVolume) (*v1.PersistentVolume, error) {
+func TranslateInTreePVToCSI(pv *v1.PersistentVolume) (*v1.PersistentVolume, error) {
 	if pv == nil {
 		return nil, errors.New("persistent volume was nil")
 	}
@@ -106,7 +82,7 @@ func (CSITranslator) TranslateInTreePVToCSI(pv *v1.PersistentVolume) (*v1.Persis
 // TranslateCSIPVToInTree takes a PV with a CSI PersistentVolume Source and will translate
 // it to a in-tree Persistent Volume Source for the specific in-tree volume specified
 // by the `Driver` field in the CSI Source. The input PV object will not be modified.
-func (CSITranslator) TranslateCSIPVToInTree(pv *v1.PersistentVolume) (*v1.PersistentVolume, error) {
+func TranslateCSIPVToInTree(pv *v1.PersistentVolume) (*v1.PersistentVolume, error) {
 	if pv == nil || pv.Spec.CSI == nil {
 		return nil, errors.New("CSI persistent volume was nil")
 	}
@@ -121,7 +97,7 @@ func (CSITranslator) TranslateCSIPVToInTree(pv *v1.PersistentVolume) (*v1.Persis
 
 // IsMigratableIntreePluginByName tests whether there is migration logic for the in-tree plugin
 // whose name matches the given name
-func (CSITranslator) IsMigratableIntreePluginByName(inTreePluginName string) bool {
+func IsMigratableIntreePluginByName(inTreePluginName string) bool {
 	for _, curPlugin := range inTreePlugins {
 		if curPlugin.GetInTreePluginName() == inTreePluginName {
 			return true
@@ -132,7 +108,7 @@ func (CSITranslator) IsMigratableIntreePluginByName(inTreePluginName string) boo
 
 // IsMigratedCSIDriverByName tests whether there exists an in-tree plugin with logic
 // to migrate to the CSI driver with given name
-func (CSITranslator) IsMigratedCSIDriverByName(csiPluginName string) bool {
+func IsMigratedCSIDriverByName(csiPluginName string) bool {
 	if _, ok := inTreePlugins[csiPluginName]; ok {
 		return true
 	}
@@ -140,7 +116,7 @@ func (CSITranslator) IsMigratedCSIDriverByName(csiPluginName string) bool {
 }
 
 // GetInTreePluginNameFromSpec returns the plugin name
-func (CSITranslator) GetInTreePluginNameFromSpec(pv *v1.PersistentVolume, vol *v1.Volume) (string, error) {
+func GetInTreePluginNameFromSpec(pv *v1.PersistentVolume, vol *v1.Volume) (string, error) {
 	if pv != nil {
 		for _, curPlugin := range inTreePlugins {
 			if curPlugin.CanSupport(pv) {
@@ -162,7 +138,7 @@ func (CSITranslator) GetInTreePluginNameFromSpec(pv *v1.PersistentVolume, vol *v
 
 // GetCSINameFromInTreeName returns the name of a CSI driver that supersedes the
 // in-tree plugin with the given name
-func (CSITranslator) GetCSINameFromInTreeName(pluginName string) (string, error) {
+func GetCSINameFromInTreeName(pluginName string) (string, error) {
 	for csiDriverName, curPlugin := range inTreePlugins {
 		if curPlugin.GetInTreePluginName() == pluginName {
 			return csiDriverName, nil
@@ -173,7 +149,7 @@ func (CSITranslator) GetCSINameFromInTreeName(pluginName string) (string, error)
 
 // GetInTreeNameFromCSIName returns the name of the in-tree plugin superseded by
 // a CSI driver with the given name
-func (CSITranslator) GetInTreeNameFromCSIName(pluginName string) (string, error) {
+func GetInTreeNameFromCSIName(pluginName string) (string, error) {
 	if plugin, ok := inTreePlugins[pluginName]; ok {
 		return plugin.GetInTreePluginName(), nil
 	}
@@ -181,7 +157,7 @@ func (CSITranslator) GetInTreeNameFromCSIName(pluginName string) (string, error)
 }
 
 // IsPVMigratable tests whether there is migration logic for the given Persistent Volume
-func (CSITranslator) IsPVMigratable(pv *v1.PersistentVolume) bool {
+func IsPVMigratable(pv *v1.PersistentVolume) bool {
 	for _, curPlugin := range inTreePlugins {
 		if curPlugin.CanSupport(pv) {
 			return true
@@ -191,19 +167,11 @@ func (CSITranslator) IsPVMigratable(pv *v1.PersistentVolume) bool {
 }
 
 // IsInlineMigratable tests whether there is Migration logic for the given Inline Volume
-func (CSITranslator) IsInlineMigratable(vol *v1.Volume) bool {
+func IsInlineMigratable(vol *v1.Volume) bool {
 	for _, curPlugin := range inTreePlugins {
 		if curPlugin.CanSupportInline(vol) {
 			return true
 		}
 	}
 	return false
-}
-
-// RepairVolumeHandle generates a correct volume handle based on node ID information.
-func (CSITranslator) RepairVolumeHandle(driverName, volumeHandle, nodeID string) (string, error) {
-	if plugin, ok := inTreePlugins[driverName]; ok {
-		return plugin.RepairVolumeHandle(volumeHandle, nodeID)
-	}
-	return "", fmt.Errorf("could not find In-Tree driver name for CSI plugin %v", driverName)
 }

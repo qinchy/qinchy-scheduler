@@ -19,8 +19,7 @@ package scheduling
 import (
 	"sync"
 
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/controller/volume/scheduling/metrics"
+	"k8s.io/api/core/v1"
 )
 
 // PodBindingCache stores PV binding decisions per pod per node.
@@ -94,7 +93,7 @@ func (c *podBindingCache) DeleteBindings(pod *v1.Pod) {
 
 	if _, ok := c.bindingDecisions[podName]; ok {
 		delete(c.bindingDecisions, podName)
-		metrics.VolumeBindingRequestSchedulerBinderCache.WithLabelValues("delete").Inc()
+		VolumeBindingRequestSchedulerBinderCache.WithLabelValues("delete").Inc()
 	}
 }
 
@@ -114,7 +113,7 @@ func (c *podBindingCache) UpdateBindings(pod *v1.Pod, node string, bindings []*b
 			bindings:      bindings,
 			provisionings: pvcs,
 		}
-		metrics.VolumeBindingRequestSchedulerBinderCache.WithLabelValues("add").Inc()
+		VolumeBindingRequestSchedulerBinderCache.WithLabelValues("add").Inc()
 	} else {
 		decision.bindings = bindings
 		decision.provisionings = pvcs

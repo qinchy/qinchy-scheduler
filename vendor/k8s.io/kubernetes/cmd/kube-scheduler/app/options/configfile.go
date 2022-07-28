@@ -21,10 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"k8s.io/klog"
-
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/component-base/codec"
 	kubeschedulerconfig "k8s.io/kubernetes/pkg/scheduler/apis/config"
 	kubeschedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 	kubeschedulerconfigv1alpha1 "k8s.io/kubernetes/pkg/scheduler/apis/config/v1alpha1"
@@ -41,28 +38,8 @@ func loadConfigFromFile(file string) (*kubeschedulerconfig.KubeSchedulerConfigur
 
 func loadConfig(data []byte) (*kubeschedulerconfig.KubeSchedulerConfiguration, error) {
 	configObj := &kubeschedulerconfig.KubeSchedulerConfiguration{}
-	// The UniversalDecoder runs defaulting and returns the internal type by default.
-	err := runtime.DecodeInto(kubeschedulerscheme.Codecs.UniversalDecoder(), data, configObj)
-	if err != nil {
-		// Try strict decoding first. If that fails decode with a lenient
-		// decoder, which has only v1alpha1 registered, and log a warning.
-		// The lenient path is to be dropped when support for v1alpha1 is dropped.
-		if !runtime.IsStrictDecodingError(err) {
-			return nil, err
-		}
-
-		var lenientErr error
-		_, lenientCodecs, lenientErr := codec.NewLenientSchemeAndCodecs(
-			kubeschedulerconfig.AddToScheme,
-			kubeschedulerconfigv1alpha1.AddToScheme,
-		)
-		if lenientErr != nil {
-			return nil, lenientErr
-		}
-		if lenientErr = runtime.DecodeInto(lenientCodecs.UniversalDecoder(), data, configObj); lenientErr != nil {
-			return nil, fmt.Errorf("failed lenient decoding: %v", err)
-		}
-		klog.Warningf("using lenient decoding as strict decoding failed: %v", err)
+	if err := runtime.DecodeInto(kubeschedulerscheme.Codecs.UniversalDecoder(), data, configObj); err != nil {
+		return nil, err
 	}
 
 	return configObj, nil

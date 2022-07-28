@@ -16,7 +16,9 @@ limitations under the License.
 
 package priorities
 
-import framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
+import (
+	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
+)
 
 var (
 	mostRequestedRatioResources = DefaultRequestedRatioResources
@@ -55,5 +57,5 @@ func mostRequestedScore(requested, capacity int64) int64 {
 		return 0
 	}
 
-	return (requested * framework.MaxNodeScore) / capacity
+	return (requested * schedulerapi.MaxPriority) / capacity
 }

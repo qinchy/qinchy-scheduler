@@ -4,7 +4,6 @@ go_library(
     name = "go_default_library",
     srcs = [
         "doc.go",
-        "legacy_types.go",
         "register.go",
         "types.go",
         "zz_generated.deepcopy.go",
@@ -31,8 +30,6 @@ filegroup(
     srcs = [
         ":package-srcs",
         "//pkg/scheduler/apis/config/scheme:all-srcs",
-        "//pkg/scheduler/apis/config/testing:all-srcs",
-        "//pkg/scheduler/apis/config/v1:all-srcs",
         "//pkg/scheduler/apis/config/v1alpha1:all-srcs",
         "//pkg/scheduler/apis/config/validation:all-srcs",
     ],

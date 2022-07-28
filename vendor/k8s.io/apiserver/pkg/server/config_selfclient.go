@@ -21,7 +21,6 @@ import (
 	"net"
 
 	restclient "k8s.io/client-go/rest"
-	netutils "k8s.io/utils/net"
 )
 
 // LoopbackClientServerNameOverride is passed to the apiserver from the loopback client in order to
@@ -71,27 +70,23 @@ func LoopbackHostPort(bindAddress string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid server bind address: %q", bindAddress)
 	}
 
-	isIPv6 := netutils.IsIPv6String(host)
+	isIPv6 := net.ParseIP(host).To4() == nil
 
 	// Value is expected to be an IP or DNS name, not "0.0.0.0".
 	if host == "0.0.0.0" || host == "::" {
+		host = "localhost"
 		// Get ip of local interface, but fall back to "localhost".
 		// Note that "localhost" is resolved with the external nameserver first with Go's stdlib.
 		// So if localhost.<yoursearchdomain> resolves, we don't get a 127.0.0.1 as expected.
-		host = getLoopbackAddress(isIPv6)
-	}
-	return host, port, nil
-}
-
-// getLoopbackAddress returns the ip address of local loopback interface. If any error occurs or loopback interface is not found, will fall back to "localhost"
-func getLoopbackAddress(wantIPv6 bool) string {
-	addrs, err := net.InterfaceAddrs()
-	if err == nil {
-		for _, address := range addrs {
-			if ipnet, ok := address.(*net.IPNet); ok && ipnet.IP.IsLoopback() && wantIPv6 == netutils.IsIPv6(ipnet.IP) {
-				return ipnet.IP.String()
+		addrs, err := net.InterfaceAddrs()
+		if err == nil {
+			for _, address := range addrs {
+				if ipnet, ok := address.(*net.IPNet); ok && ipnet.IP.IsLoopback() && isIPv6 == (ipnet.IP.To4() == nil) {
+					host = ipnet.IP.String()
+					break
+				}
 			}
 		}
 	}
-	return "localhost"
+	return host, port, nil
 }
