@@ -10,24 +10,22 @@ data:
       resourceNamespace: kube-system
       lockObjectName: qinchy-scheduler
       lockObjectNamespace: kube-system
-    profiles:
-    - schedulerName:  qinchy-scheduler
-      plugins:
-        preFilter:
-          enabled:
-            - name: "Qinchy-Plugin"
-        filter:
-          enabled:
-            - name: "Qinchy-Plugin"
-        preBind:
-          enabled:
-            - name: "Qinchy-Plugin"
-      pluginConfig:
+    plugins:
+      preFilter:
+        enabled:
         - name: "Qinchy-Plugin"
-          args:
-            favorite_color: "#326CE5"
-            favorite_number: 7
-            thanks_to: "thockin"
+      filter:
+        enabled:
+        - name: "Qinchy-Plugin"
+      preBind:
+        enabled:
+        - name: "Qinchy-Plugin"
+    pluginConfig:
+    - name: "Qinchy-Plugin"
+      args:
+        favorite_color: "#326CE5"
+        favorite_number: 7
+        thanks_to: "thockin"
 kind: ConfigMap
 metadata:
   creationTimestamp: "2022-07-22T02:18:38Z"
